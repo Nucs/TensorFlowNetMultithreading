@@ -6,10 +6,13 @@ namespace CalcEventsTFS
     class Program
     {
         const int THREADS_COUNT = 10;
-        const string modelLocation = @"../../../../model/";
+        static string modelLocation = @"../../../../model/";
 
         static void Main(string[] args)
         {
+            if (args.Length > 0)
+                modelLocation = args[0];
+
             var tasks = new Task[THREADS_COUNT];
             for (int t = 0; t < THREADS_COUNT; t++)
             {
