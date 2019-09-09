@@ -7,6 +7,8 @@ namespace CalcEventsTFS
     {
         static int THREADS_COUNT = 10;
         static string modelLocation = @"../../../../model/";
+        static object predictLock = new object();
+        static bool USE_LOCK = true;
 
         static void Main(string[] args)
         {
@@ -30,7 +32,13 @@ namespace CalcEventsTFS
                     {
                         try
                         {
-                            pr.Predict(inputs);
+                            if (USE_LOCK)
+                            {
+                                lock(predictLock)
+                                    pr.Predict(inputs);
+                            }
+                            else
+                                pr.Predict(inputs);
                         }
                         catch (Exception ex)
                         {
