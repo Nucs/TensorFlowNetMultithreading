@@ -20,7 +20,7 @@ namespace CalcEventsTFS
                     for (int i = 0; i < inputs.Length; i++)
                         inputs[i] = new float[96];
 
-                    for (int i = 0; i < 10000; i++)
+                    while (true)
                     {
                         try
                         {
