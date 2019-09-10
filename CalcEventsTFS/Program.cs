@@ -1,6 +1,9 @@
-﻿using System;
+﻿using NumSharp;
+using System;
 using System.Linq;
 using System.Threading;
+using Tensorflow;
+using Tensorflow.Util;
 
 namespace CalcEventsTFS
 {
@@ -17,39 +20,44 @@ namespace CalcEventsTFS
             if (args.Length > 1)
                 THREADS_COUNT = int.Parse(args[1]);
 
-            var tasks = new Thread[THREADS_COUNT];
             for (int t = 0; t < THREADS_COUNT; t++)
             {
-                tasks[t] = new Thread(() =>
+                new Thread(() =>
                 {
-                    var pr = new Predictor(modelLocation);
-                    var inputs = new float[2][];
-                    for (int i = 0; i < inputs.Length; i++)
-                        inputs[i] = new float[96];
+                    Session sess;
 
-                    while (true)
+                    lock (Locks.ProcessWide)
+                        sess = Session.LoadFromSavedModel(modelLocation).as_default();
+
                     {
-                        try
+                        var inputs = new[] { "sp", "fuel" };
+
+                        var inp = inputs.Select(name => sess.graph.OperationByName(name).output).ToArray();
+                        var outp = sess.graph.OperationByName("softmax_tensor").output;
+
+                        for (var i = 0; i < 1000; i++)
                         {
-                            pr.Predict(inputs);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex);
+                            {
+                                var data = new float[96];
+                                FeedItem[] feeds = new FeedItem[2];
+
+                                for (int f = 0; f < 2; f++)
+                                    feeds[f] = new FeedItem(inp[f], new NDArray(data));
+
+                                try
+                                {
+                                    sess.run(outp, feeds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex);
+                                }
+                            }
+                            GC.Collect();
                         }
                     }
-                });
+                }).Start();
             }
-
-            foreach (var t in tasks)
-                t.Start();
-
-            Console.WriteLine("Wait");
-            foreach (var t in tasks)
-                t.Join();
-
-            Console.WriteLine("Complete");
-            Console.ReadKey();
         }
     }
 }
