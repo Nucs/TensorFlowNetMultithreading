@@ -13,7 +13,7 @@ namespace CalcEventsTFS
 
         public Predictor(string modelLocation)
         {
-            _session = Session.LoadFromSavedModel(modelLocation);
+            _session = Session.LoadFromSavedModel(modelLocation).as_default();
             var inputs = new[] { "sp", "fuel" };
 
             _inputs = inputs.Select(name => _session.graph.OperationByName(name).output).ToArray();

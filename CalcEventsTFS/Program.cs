@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Threading;
 
 namespace CalcEventsTFS
 {
@@ -16,10 +17,10 @@ namespace CalcEventsTFS
             if (args.Length > 1)
                 THREADS_COUNT = int.Parse(args[1]);
 
-            var tasks = new Task[THREADS_COUNT];
+            var tasks = new Thread[THREADS_COUNT];
             for (int t = 0; t < THREADS_COUNT; t++)
             {
-                tasks[t] = Task.Run(() =>
+                tasks[t] = new Thread(() =>
                 {
                     var pr = new Predictor(modelLocation);
                     var inputs = new float[2][];
@@ -40,8 +41,12 @@ namespace CalcEventsTFS
                 });
             }
 
+            foreach (var t in tasks)
+                t.Start();
+
             Console.WriteLine("Wait");
-            Task.WaitAll(tasks);
+            foreach (var t in tasks)
+                t.Join();
 
             Console.WriteLine("Complete");
             Console.ReadKey();
