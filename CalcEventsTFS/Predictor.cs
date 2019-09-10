@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using Tensorflow;
+using Tensorflow.Util;
 
 namespace CalcEventsTFS
 {
@@ -13,16 +14,12 @@ namespace CalcEventsTFS
 
         public Predictor(string modelLocation)
         {
-            _session = Session.LoadFromSavedModel(modelLocation).as_default();
+            lock (Locks.ProcessWide)
+                _session = Session.LoadFromSavedModel(modelLocation).as_default();
             var inputs = new[] { "sp", "fuel" };
 
             _inputs = inputs.Select(name => _session.graph.OperationByName(name).output).ToArray();
             _output = _session.graph.OperationByName("softmax_tensor").output;
-
-            foreach (var inp in inputs)
-            {
-                var sp = _session.graph.OperationByName(inp).output;
-            }
         }
 
         public int Predict(params float[][] inputs)
